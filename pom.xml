@@ -48,7 +48,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>app.AuraAiApplication</mainClass>
+                    <mainClass>br.com.fiap.auraai.AuraAiApplication</mainClass>
                 </configuration>
             </plugin>
             <plugin>
@@ -56,7 +56,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>3.5.0</version>
                 <configuration>
-                    <mainClass>app.Main</mainClass>
+                    <mainClass>br.com.fiap.auraai.app.Main</mainClass>
                 </configuration>
             </plugin>
         </plugins>

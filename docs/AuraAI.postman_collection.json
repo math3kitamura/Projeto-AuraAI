@@ -1,0 +1,190 @@
+{
+  "info": {
+    "name": "Aura AI - API REST",
+    "description": "Execute a collection inteira em ordem (Run collection). Cada POST guarda o ID criado em variaveis da collection e os requests seguintes o reutilizam.\n\nPre-requisito: API rodando em http://localhost:8080 e produtos cadastrados antes da analise.\n\nA pasta 6 mostra exemplos de erro (400, 404, 409) e a pasta 7 limpa os dados criados.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "clienteId", "value": "1" },
+    { "key": "produtoId", "value": "1" },
+    { "key": "reuniaoId", "value": "1" },
+    { "key": "analiseId", "value": "1" },
+    { "key": "alertaId", "value": "1" }
+  ],
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const esperaErro = pm.info.requestName.includes('(erro');",
+          "pm.test(esperaErro ? 'Retornou erro 4xx como esperado' : 'Retornou sucesso 2xx', () => {",
+          "    pm.expect(pm.response.code >= 400).to.eql(esperaErro);",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Clientes",
+      "item": [
+        {
+          "name": "1.1 Cadastrar cliente",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Armor Solutions\",\n  \"cnpj\": \"98.765.432/0001-10\",\n  \"segmento\": \"Desenvolvimento de Jogos\",\n  \"email\": \"contato@armorsolutions.com\"\n}" },
+            "url": "{{baseUrl}}/clientes"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('clienteId', pm.response.json().id);"] } }]
+        },
+        { "name": "1.2 Listar clientes", "request": { "method": "GET", "url": "{{baseUrl}}/clientes" } },
+        { "name": "1.3 Buscar cliente", "request": { "method": "GET", "url": "{{baseUrl}}/clientes/{{clienteId}}" } },
+        {
+          "name": "1.4 Atualizar cliente",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Armor Solutions Games\",\n  \"cnpj\": \"98.765.432/0001-10\",\n  \"segmento\": \"Desenvolvimento de Jogos\",\n  \"email\": \"contato@armorsolutions.com\"\n}" },
+            "url": "{{baseUrl}}/clientes/{{clienteId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Produtos",
+      "item": [
+        {
+          "name": "2.1 Cadastrar produto",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Protheus\",\n  \"categoria\": \"ERP\",\n  \"versao\": \"12.1\",\n  \"descricao\": \"Sistema integrado de gestao empresarial.\"\n}" },
+            "url": "{{baseUrl}}/produtos"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('produtoId', pm.response.json().id);"] } }]
+        },
+        { "name": "2.2 Listar produtos", "request": { "method": "GET", "url": "{{baseUrl}}/produtos" } },
+        { "name": "2.3 Buscar produto", "request": { "method": "GET", "url": "{{baseUrl}}/produtos/{{produtoId}}" } },
+        {
+          "name": "2.4 Atualizar produto",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Protheus\",\n  \"categoria\": \"ERP\",\n  \"versao\": \"12.1.2410\",\n  \"descricao\": \"Sistema integrado de gestao empresarial.\"\n}" },
+            "url": "{{baseUrl}}/produtos/{{produtoId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Reunioes",
+      "item": [
+        {
+          "name": "3.1 Cadastrar reuniao",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"titulo\": \"Projeto TOTVS - Armor Solutions\",\n  \"dataHora\": \"2026-10-20T14:30:00\",\n  \"duracaoMin\": 60,\n  \"responsavel\": \"Matheus\",\n  \"clienteId\": {{clienteId}}\n}" },
+            "url": "{{baseUrl}}/reunioes"
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.collectionVariables.set('reuniaoId', pm.response.json().id);"] } }]
+        },
+        { "name": "3.2 Listar reunioes", "request": { "method": "GET", "url": "{{baseUrl}}/reunioes" } },
+        { "name": "3.3 Buscar reuniao", "request": { "method": "GET", "url": "{{baseUrl}}/reunioes/{{reuniaoId}}" } },
+        {
+          "name": "3.4 Atualizar reuniao",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"titulo\": \"Projeto TOTVS - Armor Solutions (revisada)\",\n  \"dataHora\": \"2026-10-21T10:00:00\",\n  \"duracaoMin\": 90,\n  \"responsavel\": \"Matheus\",\n  \"clienteId\": {{clienteId}}\n}" },
+            "url": "{{baseUrl}}/reunioes/{{reuniaoId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Transcricao",
+      "item": [
+        {
+          "name": "4.1 Cadastrar transcricao",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"textoBruto\": \"A Armor Solutions demonstrou interesse em contratar o Protheus para melhorar a gestao da empresa. A organizacao pretende expandir suas operacoes e tambem informou que esta avaliando o SAP.\",\n  \"idioma\": \"pt-BR\"\n}" },
+            "url": "{{baseUrl}}/reunioes/{{reuniaoId}}/transcricao"
+          }
+        },
+        { "name": "4.2 Buscar transcricao", "request": { "method": "GET", "url": "{{baseUrl}}/reunioes/{{reuniaoId}}/transcricao" } },
+        {
+          "name": "4.3 Atualizar transcricao",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"textoBruto\": \"A Armor Solutions demonstrou interesse em contratar o Protheus e informou que avalia o SAP.\",\n  \"idioma\": \"pt-BR\"\n}" },
+            "url": "{{baseUrl}}/reunioes/{{reuniaoId}}/transcricao"
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Analises",
+      "item": [
+        {
+          "name": "5.1 Analisar reuniao (executa a IA)",
+          "request": { "method": "POST", "url": "{{baseUrl}}/reunioes/{{reuniaoId}}/analises" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const analise = pm.response.json();", "pm.collectionVariables.set('analiseId', analise.id);", "if (analise.alertas && analise.alertas.length) { pm.collectionVariables.set('alertaId', analise.alertas[0].id); }"] } }]
+        },
+        { "name": "5.2 Listar analises", "request": { "method": "GET", "url": "{{baseUrl}}/analises" } },
+        { "name": "5.3 Buscar analise", "request": { "method": "GET", "url": "{{baseUrl}}/analises/{{analiseId}}" } },
+        { "name": "5.4 Listar alertas da analise", "request": { "method": "GET", "url": "{{baseUrl}}/analises/{{analiseId}}/alertas" } },
+        { "name": "5.5 Resolver alerta", "request": { "method": "PATCH", "url": "{{baseUrl}}/analises/{{analiseId}}/alertas/{{alertaId}}/resolver" } },
+        {
+          "name": "5.6 Ajustar dados comerciais",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"persona\": \"Decisor\",\n  \"budget\": 75000.00,\n  \"concorrente\": \"SAP\"\n}" },
+            "url": "{{baseUrl}}/analises/{{analiseId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Erros (exemplos)",
+      "item": [
+        {
+          "name": "6.1 Cliente com dados invalidos (erro 400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"\",\n  \"cnpj\": \"abc\",\n  \"segmento\": \"Jogos\",\n  \"email\": \"invalido\"\n}" },
+            "url": "{{baseUrl}}/clientes"
+          }
+        },
+        { "name": "6.2 Cliente inexistente (erro 404)", "request": { "method": "GET", "url": "{{baseUrl}}/clientes/999999" } },
+        {
+          "name": "6.3 CNPJ duplicado (erro 409)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"nome\": \"Outra Empresa\",\n  \"cnpj\": \"98.765.432/0001-10\",\n  \"segmento\": \"Jogos\",\n  \"email\": \"outra@empresa.com\"\n}" },
+            "url": "{{baseUrl}}/clientes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Limpeza (excluir dados criados)",
+      "item": [
+        { "name": "7.1 Excluir analise", "request": { "method": "DELETE", "url": "{{baseUrl}}/analises/{{analiseId}}" } },
+        { "name": "7.2 Excluir transcricao", "request": { "method": "DELETE", "url": "{{baseUrl}}/reunioes/{{reuniaoId}}/transcricao" } },
+        { "name": "7.3 Excluir reuniao", "request": { "method": "DELETE", "url": "{{baseUrl}}/reunioes/{{reuniaoId}}" } },
+        { "name": "7.4 Excluir produto", "request": { "method": "DELETE", "url": "{{baseUrl}}/produtos/{{produtoId}}" } },
+        { "name": "7.5 Excluir cliente", "request": { "method": "DELETE", "url": "{{baseUrl}}/clientes/{{clienteId}}" } }
+      ]
+    }
+  ]
+}
