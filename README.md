@@ -4,21 +4,20 @@ Projeto acadêmico desenvolvido em **Java** com o objetivo de simular uma soluç
 
 A **Aura AI** processa transcrições de reuniões e identifica informações relevantes como sentimento do cliente, risco de churn, oportunidades comerciais, concorrentes mencionados, alertas e produtos TOTVS citados durante a conversa.
 
+A solução é composta por uma **API RESTful (Spring Boot)** e um **front-end Java Swing** que consome essa API via HTTP.
+
 ---
 
 ## 📌 Funcionalidades
 
-- Cadastro de clientes
-- Cadastro de produtos TOTVS
-- Registro de reuniões
-- Cadastro de transcrições
+- Cadastro, consulta, atualização e exclusão de clientes
+- Cadastro, consulta, atualização e exclusão de produtos TOTVS
+- Registro de reuniões e de suas transcrições
 - Análise automática das reuniões
-- Identificação de sentimento
-- Cálculo de risco de churn
-- Identificação de oportunidades comerciais
-- Identificação de concorrentes
+- Identificação de sentimento, risco de churn, oportunidade comercial e concorrentes
 - Identificação de produtos TOTVS mencionados
 - Geração automática de alertas
+- API RESTful com respostas de erro padronizadas
 - Persistência em PostgreSQL
 - Interface gráfica utilizando Java Swing
 
@@ -27,8 +26,6 @@ A **Aura AI** processa transcrições de reuniões e identifica informações re
 ## 🧠 Regras de Negócio
 
 A principal lógica do sistema está concentrada na classe `AnaliseIA`.
-
-Principais métodos:
 
 ```java
 identificarSentimento()
@@ -51,35 +48,26 @@ Oportunidade: 90%
 Persona: Decisor
 Budget: R$ 50000.00
 Concorrente: SAP
-
-Produto identificado:
-Protheus
-
-Alertas:
-UPSELL
-CONCORRENTE
+Produto identificado: Protheus
+Alertas: UPSELL, CONCORRENTE
 ```
 
 ---
 
 ## 🏗️ Arquitetura
 
-O projeto utiliza uma arquitetura dividida em camadas:
-
 ```text
-Usuário
+Swing (view)
+   ↓  HTTP / JSON
+ApiClient (client)
    ↓
-Swing / View
+Controller REST  →  DTO
    ↓
-Controller
+Service (validações e regras)
    ↓
-Model / Service
-   ↓
-DAO
+DAO (JDBC)
    ↓
 ConnectionFactory
-   ↓
-JDBC
    ↓
 PostgreSQL
 ```
@@ -87,59 +75,72 @@ PostgreSQL
 ### Estrutura do Projeto
 
 ```text
-src
-│
-├── app
-│   └── Main.java
-│
-├── controller
-│   ├── ClienteController.java
-│   ├── ProdutoController.java
-│   ├── ReuniaoController.java
-│   └── AnaliseController.java
-│
-├── dao
-│   ├── ClienteDAO.java
-│   ├── ClienteDAOImpl.java
-│   ├── ProdutoDAO.java
-│   ├── ProdutoDAOImpl.java
-│   ├── ReuniaoDAO.java
-│   ├── ReuniaoDAOImpl.java
-│   ├── AnaliseIADAO.java
-│   └── AnaliseIADAOImpl.java
-│
-├── domain
-│   ├── model
-│   └── service
-│       └── AnaliseIA.java
-│
-├── factory
-│   └── ConnectionFactory.java
-│
-├── test
-│   └── TesteRegrasNegocio.java
-│
-└── view
-    ├── TelaPrincipal.java
-    ├── TelaCliente.java
-    ├── TelaProduto.java
-    ├── TelaReuniao.java
-    └── TelaAnalise.java
+src/main
+├── java
+│   ├── app          Main (Swing) e AuraAiApplication (API)
+│   ├── client       Clientes HTTP usados pelo Swing
+│   ├── controller   Controllers REST
+│   ├── dto          Objetos de entrada e saída da API
+│   ├── service      Regras de negócio e validações
+│   ├── dao          Acesso ao banco (JDBC)
+│   ├── domain.model Entidades de domínio
+│   ├── exception    Exceções da aplicação e tratamento global
+│   ├── factory      ConnectionFactory (Factory + Singleton)
+│   └── view         Telas Swing
+└── resources        application.properties
+src/test             Testes JUnit
+db                   schema.sql e script de migração
+```
+
+---
+
+## 🌐 API REST
+
+Base URL: `http://localhost:8080`
+
+| Recurso | Verbo | URI | Sucesso | Erros |
+|---|---|---|---|---|
+| Clientes | GET | `/clientes` | 200 | 500 |
+| | GET | `/clientes/{id}` | 200 | 400, 404 |
+| | POST | `/clientes` | 201 | 400, 409 (CNPJ duplicado) |
+| | PUT | `/clientes/{id}` | 200 | 400, 404, 409 |
+| | DELETE | `/clientes/{id}` | 204 | 404, 409 (possui reuniões) |
+| Produtos | GET | `/produtos` | 200 | 500 |
+| | GET | `/produtos/{id}` | 200 | 400, 404 |
+| | POST | `/produtos` | 201 | 400 |
+| | PUT | `/produtos/{id}` | 200 | 400, 404 |
+| | DELETE | `/produtos/{id}` | 204 | 404, 409 (usado em análises) |
+| Reuniões | GET | `/reunioes` | 200 | 500 |
+| | GET | `/reunioes/{id}` | 200 | 400, 404 |
+| | POST | `/reunioes` | 201 | 400, 404 (cliente inexistente) |
+| | PUT | `/reunioes/{id}` | 200 | 400, 404 |
+| | DELETE | `/reunioes/{id}` | 204 | 404 |
+| Transcrição | GET | `/reunioes/{id}/transcricao` | 200 | 404 |
+| | POST | `/reunioes/{id}/transcricao` | 201 | 400, 404, 409 (já existe) |
+| Análises | POST | `/reunioes/{id}/analises` | 201 | 404, 422 (sem transcrição) |
+| | GET | `/analises` | 200 | 500 |
+| | GET | `/analises/{id}` | 200 | 400, 404 |
+| | GET | `/analises/{id}/alertas` | 200 | 404 |
+| | PUT | `/analises/{id}` | 200 | 400, 404 |
+| | DELETE | `/analises/{id}` | 204 | 404 |
+
+Todas as respostas de erro seguem o formato:
+
+```json
+{
+  "timestamp": "2026-10-19T14:30:00",
+  "status": 404,
+  "erro": "Not Found",
+  "mensagem": "Cliente não encontrado.",
+  "caminho": "/clientes/99"
+}
 ```
 
 ---
 
 ## 🗃️ Banco de Dados
 
-O projeto utiliza **PostgreSQL** para persistência das informações.
-
-Banco utilizado:
-
-```text
-aura_ai
-```
-
-### Estrutura das Tabelas
+Banco: `aura_ai` (PostgreSQL). O script completo está em [`db/schema.sql`](db/schema.sql).
 
 | Tabela | Principais Campos |
 |---|---|
@@ -151,8 +152,6 @@ aura_ai
 | `alerta` | `id`, `tipo`, `descricao`, `prioridade`, `status`, `analise_id` |
 | `analise_produto` | `analise_id`, `produto_id`, `contexto`, `relevancia`, `tipo_mencao` |
 
-### Relacionamentos
-
 ```text
 CLIENTE
    ↓
@@ -165,136 +164,19 @@ REUNIAO
             PRODUTO_TOTVS
 ```
 
-Os relacionamentos entre as tabelas são controlados por **chaves estrangeiras**, garantindo a integridade dos dados no PostgreSQL.
-```text
-CLIENTE
-   ↓
-REUNIAO
-   ├── TRANSCRICAO
-   └── ANALISE_IA
-          ├── ALERTA
-          └── ANALISE_PRODUTO
-                 ↓
-            PRODUTO_TOTVS
-```
+Os relacionamentos são controlados por chaves estrangeiras. Transcrição, análise, alertas e produtos identificados são excluídos em cascata junto com a reunião ou a análise; clientes e produtos em uso não podem ser excluídos (a API responde 409).
+
+Se o banco já existia antes desta versão, rode [`db/migracao_banco_existente.sql`](db/migracao_banco_existente.sql) no DBeaver.
 
 ---
 
-## 💾 DAO e CRUD
+## ⚙️ Configuração e Execução
 
-O sistema utiliza o padrão **DAO (Data Access Object)** para separar o acesso ao banco das regras de negócio.
+### Requisitos
 
-As operações CRUD implementadas são:
-
-```text
-CREATE
-READ
-UPDATE
-DELETE
-```
-
-Exemplo:
-
-```java
-clienteDAO.inserir(cliente);
-clienteDAO.buscarPorId(id);
-clienteDAO.listarTodos();
-clienteDAO.atualizar(cliente);
-clienteDAO.excluir(id);
-```
-
----
-
-## 🏭 Factory e Singleton
-
-A conexão com o PostgreSQL é centralizada na classe:
-
-```text
-ConnectionFactory.java
-```
-
-Exemplo:
-
-```java
-Connection conexao =
-        ConnectionFactory
-                .getInstance()
-                .getConnection();
-```
-
-A classe utiliza os padrões **Factory** e **Singleton** para centralizar a criação das conexões JDBC.
-
----
-
-## 🖥️ Interface Gráfica
-
-A interface gráfica foi desenvolvida utilizando **Java Swing**.
-
-O sistema possui as seguintes telas:
-
-```text
-Tela Principal
-├── Clientes
-├── Produtos TOTVS
-├── Reuniões
-└── Análise IA
-```
-
-A interface permite realizar operações de cadastro, consulta, atualização, exclusão e análise das reuniões.
-
----
-
-## 🧪 Testes
-
-O projeto possui uma classe específica para testar as principais regras de negócio:
-
-```text
-TesteRegrasNegocio.java
-```
-
-Ela instancia objetos do sistema e testa métodos como:
-
-```java
-identificarSentimento()
-calcularRiscoChurn()
-calcularOportunidade()
-identificarConcorrente()
-mapearProduto()
-```
-
-São utilizados cenários positivos e negativos para validar o comportamento da aplicação.
-
-Exemplo:
-
-```text
-[APROVADO] Identificação de sentimento
-[APROVADO] Cálculo do risco de churn
-[APROVADO] Cálculo da oportunidade comercial
-[APROVADO] Identificação de concorrente
-[APROVADO] Identificação do produto Protheus
-
-TODOS OS TESTES FORAM EXECUTADOS COM SUCESSO!
-```
-
----
-
-## 🛠️ Tecnologias Utilizadas
-
-- Java
-- Java Swing
-- JDBC
+- Java 17 ou superior
+- Maven 3.9+ (ou o Maven do IntelliJ)
 - PostgreSQL
-- DBeaver
-- IntelliJ IDEA
-- Programação Orientada a Objetos
-- DAO
-- Factory
-- Singleton
-- Arquitetura em camadas
-
----
-
-## ⚙️ Configuração
 
 ### 1. Criar o banco
 
@@ -302,40 +184,57 @@ TODOS OS TESTES FORAM EXECUTADOS COM SUCESSO!
 CREATE DATABASE aura_ai;
 ```
 
+Depois execute `db/schema.sql` conectado ao banco `aura_ai`.
+
 ### 2. Configurar a conexão
 
-Na classe `ConnectionFactory.java`:
+A senha **não fica no código**. Use uma destas opções:
 
-```java
-private static final String URL =
-        "jdbc:postgresql://localhost:5432/aura_ai";
+- Variáveis de ambiente: `DB_URL`, `DB_USER`, `DB_PASSWORD`
+- Arquivo `db.properties` na raiz do projeto (ignorado pelo Git). Copie `db.properties.example` e preencha a senha.
 
-private static final String USUARIO =
-        "postgres";
+### 3. Subir a API
 
-private static final String SENHA =
-        "sua_senha";
+```bash
+mvn spring-boot:run
 ```
 
-### 3. Adicionar o driver JDBC
+ou execute a classe `app.AuraAiApplication` no IntelliJ.
 
-Adicione o arquivo `.jar` do PostgreSQL às dependências do projeto.
+### 4. Abrir o front-end Swing
 
-Exemplo:
+Com a API em execução:
 
-```text
-postgresql-x.x.x.jar
+```bash
+mvn compile exec:java
 ```
 
-### 4. Executar o projeto
+ou execute a classe `app.Main` no IntelliJ. Para apontar para outra URL, defina `AURA_API_URL` (padrão `http://localhost:8080`).
 
-Execute:
+---
 
-```text
-app.Main
+## 🧪 Testes
+
+```bash
+mvn test
 ```
 
-A interface principal da Aura AI será iniciada.
+- `AnaliseIATest`: regras de negócio da análise (cenários positivo e negativo)
+- `ClienteControllerTest`: códigos de status da API (200, 201, 204, 400, 404, 409)
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+- Java 17
+- Spring Boot 3 (Web, Validation)
+- Java Swing
+- JDBC
+- PostgreSQL e DBeaver
+- Maven
+- JUnit 5 e MockMvc
+- IntelliJ IDEA
+- Padrões: DAO, Factory, Singleton, DTO, camadas (Controller, Service, DAO)
 
 ---
 
@@ -352,19 +251,4 @@ A interface principal da Aura AI será iniciada.
 
 ## 🎓 Projeto Acadêmico
 
-Projeto desenvolvido para a disciplina de Java da **FIAP - Engenharia de Software**, aplicando conceitos de:
-
-- Orientação a Objetos
-- CRUD
-- JDBC
-- PostgreSQL
-- DAO
-- Factory
-- Singleton
-- Controllers
-- Swing
-- Regras de negócio
-- Persistência de dados
-- Relacionamentos entre entidades
-- Tratamento de exceções
-- Transações com Commit e Rollback
+Projeto desenvolvido para a disciplina de Java da **FIAP - Engenharia de Software**, aplicando conceitos de Orientação a Objetos, CRUD, JDBC, PostgreSQL, DAO, API RESTful com Spring Boot, tratamento de exceções, transações com commit e rollback e relacionamentos entre entidades.
